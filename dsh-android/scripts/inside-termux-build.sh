@@ -32,7 +32,22 @@ DSH_VERSION="${DSH_VERSION}" node "$HOME/tmp/dsh-termux-pkg/package/install.js"
 echo "== 3/6 验证 dsh 与预编译原生模块 =="
 DSH_BIN="$(npm root -g)/@deepseek-ai/dsh/lib/bin.js"
 node --expose-internals "$DSH_BIN" --version
-node -e "require('$(npm root -g)/@deepseek-ai/dsh/node_modules/node-pty'); require('$(npm root -g)/@deepseek-ai/dsh/node_modules/koffi'); console.log('natives ok')"
+NPM_G="$(npm root -g)"
+PTY_FILE="$NPM_G/@deepseek-ai/dsh/node_modules/node-pty/build/Release/pty.node"
+KOFFI_FILE="$NPM_G/@deepseek-ai/dsh/node_modules/koffi/build/koffi/android_arm64/koffi.node"
+echo "--- pty.node ---"
+file "$PTY_FILE" 2>&1 || true
+ls -l "$PTY_FILE" 2>&1 || true
+echo "--- direct pty require ---"
+node -e "try { require('$PTY_FILE'); console.log('pty direct ok') } catch (e) { console.error('PTY_ERR', e.message); console.error(e.stack) }" 2>&1 || true
+echo "--- koffi.node ---"
+file "$KOFFI_FILE" 2>&1 || true
+ls -l "$KOFFI_FILE" 2>&1 || true
+echo "--- direct koffi require ---"
+node -e "try { require('$KOFFI_FILE'); console.log('koffi direct ok') } catch (e) { console.error('KOFFI_ERR', e.message); console.error(e.stack) }" 2>&1 || true
+echo "--- node -p process.versions ---"
+node -p "JSON.stringify(process.versions)"
+exit 1
 
 echo "== 4/6 装配梁神模式 =="
 export DSH_HOME=/data/dshhome
