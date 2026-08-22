@@ -34,6 +34,7 @@ android {
 }
 
 dependencies {
-    // v0 骨架：暂无第三方依赖，全部使用 Android 平台 API。
-    // phase 2 解压 tar.xz 时再加 commons-compress + xz。
+    // 解压快照 snapshot.tar.xz（M2）
+    implementation("org.apache.commons:commons-compress:1.28.0")
+    implementation("org.tukaani:xz:1.12")
 }

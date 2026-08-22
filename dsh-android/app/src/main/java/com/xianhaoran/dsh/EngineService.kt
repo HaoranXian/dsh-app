@@ -11,6 +11,7 @@ import android.os.IBinder
 class EngineService : Service() {
     private var watchdogThread: Thread? = null
     @Volatile private var stopped = false
+    @Volatile private var restarting = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -24,8 +25,11 @@ class EngineService : Service() {
         if (watchdogThread == null) {
             watchdogThread = Thread {
                 while (!stopped) {
-                    if (!EngineProbe.isRunning()) {
-                        // TODO(phase 2): EngineManager 重启引擎（5s 看门狗）
+                    if (!EngineProbe.isRunning() && !restarting) {
+                        restarting = true
+                        EngineManager(this).startEngineAsync(
+                            onResult = { _, _ -> restarting = false }
+                        )
                     }
                     try {
                         Thread.sleep(5000)
