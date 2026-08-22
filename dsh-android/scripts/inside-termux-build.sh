@@ -15,9 +15,10 @@ pkg update -y
 pkg install -y nodejs-lts bash coreutils git python ripgrep make clang cmake patch tar xz-utils curl
 
 echo "== 2/6 安装 dsh-termux 轻量预编译包（DSH_VERSION=${DSH_VERSION}）=="
-curl -fsSL -o /tmp/dsh-termux.tgz \
+mkdir -p "$HOME/tmp"
+curl -fsSL -o "$HOME/tmp/dsh-termux.tgz" \
   https://github.com/Vengisk/deepseek-harness-termux/releases/download/v0.1.0-termux.1/dsh-termux.tgz
-DSH_VERSION="${DSH_VERSION}" npm install -g /tmp/dsh-termux.tgz
+DSH_VERSION="${DSH_VERSION}" npm install -g "$HOME/tmp/dsh-termux.tgz"
 
 echo "== 3/6 验证 dsh 与预编译原生模块 =="
 DSH_BIN="$(npm root -g)/@deepseek-ai/dsh/lib/bin.js"
