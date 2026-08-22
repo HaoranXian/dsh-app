@@ -19,15 +19,15 @@ jobs:
       - name: Build snapshot
         env:
           DSH_VERSION: ${{ inputs.dsh_version || 'latest' }}
-        run: bash scripts/build-snapshot.sh
+        run: bash dsh-android/scripts/build-snapshot.sh
 
       - name: Upload snapshot artifact
         uses: actions/upload-artifact@v4
         with:
           name: dsh-snapshot
           path: |
-            build/snapshot.tar.xz
-            build/manifest.json
+            dsh-android/build/snapshot.tar.xz
+            dsh-android/build/manifest.json
           if-no-files-found: error
 
       - name: Publish release
@@ -35,6 +35,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/snapshot.tar.xz
-            build/manifest.json
+            dsh-android/build/snapshot.tar.xz
+            dsh-android/build/manifest.json
           generate_release_notes: true
