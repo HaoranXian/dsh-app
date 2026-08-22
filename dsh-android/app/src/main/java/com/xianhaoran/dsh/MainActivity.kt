@@ -31,7 +31,6 @@ class MainActivity : Activity() {
         webView = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
-            settings.databaseEnabled = true
             settings.allowFileAccess = true
             addJavascriptInterface(AndroidBridge(this@MainActivity), "androidBridge")
             webViewClient = WebViewClient()
