@@ -10,6 +10,10 @@ on:
   push:
     tags: ['v*']
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   snapshot:
     runs-on: ubuntu-24.04-arm
@@ -37,6 +41,29 @@ jobs:
           name: ci-run-log
           path: dsh-android/build/snapshot-work/ci-run.log
           if-no-files-found: ignore
+
+      - name: Report failure as issue (debug)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LOG=dsh-android/build/snapshot-work/ci-run.log
+          if [ -f "$LOG" ]; then
+            python3 - "$LOG" <<'PY'
+import json, os, sys, urllib.request
+log = open(sys.argv[1]).read()
+body = log[-8000:]
+data = json.dumps({'title': '[CI] dsh snapshot build failed', 'body': body}).encode()
+req = urllib.request.Request(
+    'https://api.github.com/repos/' + os.environ['GITHUB_REPOSITORY'] + '/issues',
+    data=data, method='POST',
+    headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+try:
+    urllib.request.urlopen(req)
+except Exception as e:
+    print('issue create failed:', e)
+PY
+          fi
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
