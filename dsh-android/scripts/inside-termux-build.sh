@@ -8,6 +8,9 @@
 set -euo pipefail
 
 export TERM=xterm-256color
+export PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+export PATH="$PREFIX/bin:/system/bin:$PATH"
+export LD_LIBRARY_PATH="$PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 DSH_VERSION="${DSH_VERSION:-latest}"
 
 echo "== 1/6 安装 Termux 基础工具链 =="
