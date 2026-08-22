@@ -19,7 +19,7 @@
 | 4 | 工程归属 | 在 dsh-app 目录下新建自研最小壳 dsh-android（Kotlin） |
 | 5 | 快照来源 | 自建离线自包含快照，随 APK 打包 |
 | 6 | 快照构建环境 | GitHub Actions arm64 runner + termux/termux-docker:aarch64（本机无 Docker/Intel） |
-| 7 | dsh 版本 | 构建时取 npm 最新，并记录进 manifest（当前 npm latest 为 @deepseek-ai/dsh 0.1.1-rc.2） |
+| 7 | dsh 版本 | 构建时取 npm 最新，并记录进 manifest（M1 实现：DSH_VERSION=latest，经 Vengisk dsh-termux 轻量包安装 0.1.1-rc.2 + 9 个 Android 补丁） |
 | 8 | 首版功能 | 极简：官方内核 + 梁神模式预设 + 移动适配 |
 | 9 | 工作区 | /storage/emulated/0/DeepSeekHarness/workspace（需要「所有文件访问」） |
 | 10 | 更新 | 随 APK 升级，v1 不做在线热更 |

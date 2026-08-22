@@ -1,0 +1,42 @@
+/* dsh-android 移动适配 M1
+   目标：官方 DSH 界面在手机窄屏上可读，避免桌面缩放导致字号过小。
+   后续 M3 再做完整的抽屉侧栏/触摸优化。 */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html, body {
+  font-size: 16px !important;
+}
+
+body {
+  line-height: 1.5;
+}
+
+input, textarea, select, button {
+  font-size: 16px !important;
+}
+
+img, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+pre, code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 挖孔屏/刘海安全区兜底 */
+:root {
+  --dsh-safe-top: env(safe-area-inset-top, 12px);
+  --dsh-safe-bottom: env(safe-area-inset-bottom, 12px);
+}
+
+@media (max-width: 1024px) {
+  /* 至少确保可读字号；具体窄屏布局后续迭代 */
+  :root {
+    font-size: 16px;
+  }
+}

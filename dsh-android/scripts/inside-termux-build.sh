@@ -1,51 +1,56 @@
 #!/usr/bin/env bash
 # 在 Termux Docker (aarch64) 容器内构建 dsh 运行时快照。
 # 调用方：build-snapshot.sh（已挂载 /repo 与 /work）
+# 说明：使用 Vengisk dsh-termux 轻量预编译包：
+#   - DSH_VERSION 继承自环境变量（CI 传 latest 或具体版本）
+#   - 包内 postinstall 会安装对应版本 @deepseek-ai/dsh、应用 9 个 Android 补丁、
+#     放入 android-arm64 预编译 node-pty/koffi、装 sharp-wasm32、修正 shebang
 set -euo pipefail
 
 export TERM=xterm-256color
 DSH_VERSION="${DSH_VERSION:-latest}"
-echo "== 安装 Termux 基础工具链 =="
+
+echo "== 1/6 安装 Termux 基础工具链 =="
 pkg update -y
-pkg install -y nodejs-lts bash coreutils git python ripgrep make clang cmake patch tar xz-utils
+pkg install -y nodejs-lts bash coreutils git python ripgrep make clang cmake patch tar xz-utils curl
 
-echo "== 安装 dsh (${DSH_VERSION}) =="
-if [ "${DSH_VERSION}" = "latest" ]; then
-  npm install -g @deepseek-ai/dsh@latest
-else
-  npm install -g "@deepseek-ai/dsh@${DSH_VERSION}"
-fi
+echo "== 2/6 安装 dsh-termux 轻量预编译包（DSH_VERSION=${DSH_VERSION}）=="
+curl -fsSL -o /tmp/dsh-termux.tgz \
+  https://github.com/Vengisk/deepseek-harness-termux/releases/download/v0.1.0-termux.1/dsh-termux.tgz
+DSH_VERSION="${DSH_VERSION}" npm install -g /tmp/dsh-termux.tgz
 
-echo "== 应用 Android 兼容补丁 =="
-if [ -d /repo/patches ]; then
-  for p in /repo/patches/*.patch; do
-    [ -e "$p" ] || continue
-    echo "== apply $(basename "$p") =="
-    pushd "$(npm root -g)" >/dev/null
-    patch -p1 < "$p" || true
-    popd >/dev/null
-  done
-fi
+echo "== 3/6 验证 dsh 与预编译原生模块 =="
+DSH_BIN="$(npm root -g)/@deepseek-ai/dsh/lib/bin.js"
+node --expose-internals "$DSH_BIN" --version
+node -e "require('$(npm root -g)/@deepseek-ai/dsh/node_modules/node-pty'); require('$(npm root -g)/@deepseek-ai/dsh/node_modules/koffi'); console.log('natives ok')"
 
-echo "== 预编译原生模块（node-pty/koffi 等）=="
-# TODO(phase 1): 从 Vengisk release 合并 android-arm64 预编译产物，或在本容器内
-#   clang + cmake 编译 node-pty/koffi（NDK sysroot 来自 Termux）。
-
-echo "== 装配梁神模式 =="
-# 使用 npm 已发布包；默认 profile web 由 dsh 自动创建
+echo "== 4/6 装配梁神模式 =="
 export DSH_HOME=/data/dshhome
-export PATH="$PREFIX/bin:$PATH"
-node --expose-internals "$(npm root -g)/@deepseek-ai/dsh/lib/bin.js" plugin --profile web add @linxin666/dsh-liangshen || true
+mkdir -p "$DSH_HOME/profiles/web"
+node --expose-internals "$DSH_BIN" plugin --profile web add @linxin666/dsh-liangshen || true
 
-echo "== 打移动适配补丁（mobile.css/mobile.js 注入 dsh-web-frontend dist）=="
-# TODO(phase 1): 把仓库 mobile-patch/ 下的文件注入 dist/index.html；或在插件层实现。
+echo "== 5/6 注入移动适配（mobile.css / mobile.js）=="
+INDEX_HTML="$(find "$(npm root -g)/@deepseek-ai" -type f -path '*dist*' -name index.html 2>/dev/null | head -1)"
+if [ -n "$INDEX_HTML" ]; then
+  DIST_DIR="$(dirname "$INDEX_HTML")"
+  cp /repo/mobile-patch/mobile.css "$DIST_DIR/mobile.css"
+  cp /repo/mobile-patch/mobile.js "$DIST_DIR/mobile.js"
+  if ! grep -q 'name="viewport"' "$INDEX_HTML"; then
+    sed -i 's#</head>#<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head>#' "$INDEX_HTML"
+  fi
+  sed -i 's#</head>#<link rel="stylesheet" href="./mobile.css"></head>#' "$INDEX_HTML"
+  sed -i 's#</body>#<script src="./mobile.js"></script></body>#' "$INDEX_HTML"
+  echo "  injected -> $DIST_DIR"
+else
+  echo "  [WARN] 未找到 dsh web index.html，移动适配未注入"
+fi
 
-echo "== 打包快照 =="
+echo "== 6/6 打包快照 =="
 SNAPSHOT=/work/snapshot.tar.xz
 tar -cJf "$SNAPSHOT" -C "$PREFIX" .
 size=$(wc -c < "$SNAPSHOT" | tr -d ' ')
 sha=$(sha256sum "$SNAPSHOT" | awk '{print $1}')
 cat > /work/manifest.json <<EOF
-{"version":"${DSH_VERSION}","arch":"aarch64","pageSize":16,"size":${size},"sha256":"${sha}","file":"snapshot.tar.xz"}
+{"version":"${DSH_VERSION}","dshVersion":"${DSH_VERSION}","arch":"aarch64","pageSize":16,"size":${size},"sha256":"${sha}","file":"snapshot.tar.xz"}
 EOF
 echo "done: size=${size} sha256=${sha}"
