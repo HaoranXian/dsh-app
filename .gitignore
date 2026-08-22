@@ -1,0 +1,23 @@
+# 独立 git 仓库，由各自仓库维护，忽略（不要推入 dsh-app 父仓库）
+/deepseek-harness/
+/dsh-web-ui/
+/dsh-desktop/
+
+# macOS
+.DS_Store
+
+# Android / Gradle
+dsh-android/.gradle/
+dsh-android/build/
+dsh-android/app/build/
+dsh-android/local.properties
+dsh-android/app/src/main/assets/snapshot.tar.xz
+dsh-android/app/src/main/assets/manifest.json
+dsh-android/.kotlin/
+
+# 密钥与构建产物（绝不入库）
+*.keystore
+*.jks
+*.pem
+*.tar.xz
+build/

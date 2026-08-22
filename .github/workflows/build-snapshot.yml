@@ -1,0 +1,40 @@
+name: Build dsh Android snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      dsh_version:
+        description: 'DSH npm 版本（默认 latest）'
+        required: false
+        default: 'latest'
+  push:
+    tags: ['v*']
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build snapshot
+        env:
+          DSH_VERSION: ${{ inputs.dsh_version || 'latest' }}
+        run: bash scripts/build-snapshot.sh
+
+      - name: Upload snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsh-snapshot
+          path: |
+            build/snapshot.tar.xz
+            build/manifest.json
+          if-no-files-found: error
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/snapshot.tar.xz
+            build/manifest.json
+          generate_release_notes: true
