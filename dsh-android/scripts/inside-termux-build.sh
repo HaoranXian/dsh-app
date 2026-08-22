@@ -15,7 +15,7 @@ DSH_VERSION="${DSH_VERSION:-latest}"
 
 echo "== 1/6 安装 Termux 基础工具链 =="
 pkg update -y
-pkg install -y nodejs-lts bash coreutils git python ripgrep make clang cmake patch tar xz-utils curl
+pkg install -y nodejs-lts bash coreutils git python ripgrep make clang cmake patch tar xz-utils curl libandroid-spawn
 
 echo "== 2/6 安装 dsh-termux 轻量预编译包（DSH_VERSION=${DSH_VERSION}）=="
 mkdir -p "$HOME/tmp"
@@ -45,9 +45,8 @@ file "$KOFFI_FILE" 2>&1 || true
 ls -l "$KOFFI_FILE" 2>&1 || true
 echo "--- direct koffi require ---"
 node -e "try { require('$KOFFI_FILE'); console.log('koffi direct ok') } catch (e) { console.error('KOFFI_ERR', e.message); console.error(e.stack) }" 2>&1 || true
-echo "--- node -p process.versions ---"
-node -p "JSON.stringify(process.versions)"
-exit 1
+echo "--- native package require ---"
+node -e "require('$NPM_G/@deepseek-ai/dsh/node_modules/node-pty'); require('$NPM_G/@deepseek-ai/dsh/node_modules/koffi'); console.log('natives ok')"
 
 echo "== 4/6 装配梁神模式 =="
 export DSH_HOME=/data/dshhome
