@@ -35,6 +35,10 @@
 |---|----|------|------|------|------|
 | 12 | pnpm 软链指向构建期 Termux 绝对路径 | 设备上插件加载失败 | dsh plugin add 用 pnpm，node_modules 软链是 /data/data/com.termux/files/usr/... | 把 presets 目录直接复制进 .agent-presets（自包含） | 快照打包时就要考虑“可迁移性”，不要依赖绝对路径 |
 | 13 | 大 asset 经 AssetManager 压缩流被截断 | 真机复制快照只有 58MB/265MB，size mismatch | 默认 deflate 存储 + 大文件流在真机不稳定 | androidResources.noCompress 标记 snapshot/manifest | 打包大 asset 一律 noCompress，并在 APK 内校验 |
+| 14 | app 内 exec node 报 EACCES | error=13, Permission denied | targetSdk>=29 应用私有数据目录 noexec（woaiys3 实测；本机 iQOO15 复现） | targetSdk 改 28（lint 关 checkReleaseBuilds） | 个人侧载 APK 用 targetSdk 28；上架需另想办法（如 nativeLibraryDir 迁移） |
+| 15 | node 报 OpenSSL 配置路径不存在 | error:8000000D BIO_new_file: /data/data/com.termux/files/usr/etc/tls/openssl.cnf Permission denied | OpenSSL 默认读编译期绝对路径 | 环境变量 OPENSSL_CONF / SSL_CERT_FILE 指向迁移后路径 | 迁移型运行时必须重定向绝对路径类配置 |
+| 16 | 双开引擎（主界面+看门狗各起一个） | 两条 engine started | 两个 EngineManager 实例，@Synchronized 只锁实例 | 用 companion 全局单锁 synchronized(START_LOCK) | 跨实例并发必须用全局锁 |
+| 17 | OriginOS USB 安装被拒 | adb install: User rejected permissions | vivo/OriginOS 的“USB 安装”开发者选项未开 | 开启设置-开发者选项-USB安装，或文件管理器手动装 | 真机自动化前先确认 USB 安装权限 |
 
 ## 规避原则（以后怎么做）
 

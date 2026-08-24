@@ -24,7 +24,10 @@ class EngineManager(private val context: Context) {
         }.start()
     }
 
-    private fun startEngineBlocking(onProgress: (String) -> Unit): Pair<Boolean, String> {
+    private fun startEngineBlocking(onProgress: (String) -> Unit): Pair<Boolean, String> =
+        synchronized(START_LOCK) { startEngineBlockingLocked(onProgress) }
+
+    private fun startEngineBlockingLocked(onProgress: (String) -> Unit): Pair<Boolean, String> {
         if (EngineProbe.isRunning()) return true to "dsh 服务已在运行"
 
         if (!SnapshotExtractor.ensureExtracted(context, onProgress)) {
@@ -57,6 +60,9 @@ class EngineManager(private val context: Context) {
             "DSH_HOME" to dshHome.absolutePath,
             "TMPDIR" to tmpDir.absolutePath,
             "SHELL" to "bash",
+            // OpenSSL 默认去读编译期绝对路径，迁移后必须重定向
+            "OPENSSL_CONF" to runtimeDir.absolutePath + "/etc/tls/openssl.cnf",
+            "SSL_CERT_FILE" to runtimeDir.absolutePath + "/etc/tls/cert.pem",
         )
 
         return try {
@@ -77,6 +83,7 @@ class EngineManager(private val context: Context) {
 
             process = pb.start()
             Log.d("EngineManager", "engine started, cwd=" + runtimeDir.absolutePath)
+            monitorProcess(process!!)
 
             val ready = waitReady(60_000)
             if (ready) {
@@ -90,6 +97,19 @@ class EngineManager(private val context: Context) {
             Log.e("EngineManager", "start failed", e)
             false to "引擎启动失败: " + e.message
         }
+    }
+
+    /** 后台监控：进程退出时把退出码 + engine.log 尾部打到 logcat，便于真机排查。 */
+    private fun monitorProcess(proc: Process) {
+        Thread {
+            try {
+                val code = proc.waitFor()
+                Log.e("EngineManager", "engine exited code=" + code)
+                val lines = logFile.readLines().takeLast(30)
+                for (l in lines) Log.e("EngineManager", "engine.log> " + l)
+            } catch (_: Exception) {
+            }
+        }.start()
     }
 
     fun stopEngine() {
@@ -111,5 +131,10 @@ class EngineManager(private val context: Context) {
             Thread.sleep(500)
         }
         return false
+    }
+
+    companion object {
+        /** 全局单锁：MainActivity 与看门狗是不同 EngineManager 实例，必须用静态锁防止双开引擎。 */
+        private val START_LOCK = Any()
     }
 }

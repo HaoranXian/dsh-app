@@ -26,18 +26,21 @@ koffi 包级加载报错：Error: Mismatched native Koffi modules（koffi/src/ko
 - 选定 B：在 Termux Docker 内用源码重编 koffi 和 node-pty（容器已有 clang/cmake/ndk-sysroot），适配 dsh 0.1.1-rc.2 依赖的 koffi 版本；
   或等 Vengisk 更新预编译。不降级到 0.1.0-rc.6。
 
-## 当前状态（2026-08-24）
+## 当前状态（2026-08-24 真机冒烟）
 
-- M1 快照 CI 全绿：v0.1.0-m16 已发布 release 资产（snapshot.tar.xz 265MB + manifest.json，sha256 已校验）。
-- 本地已用 m16 快照打出 267MB release APK 并用 debug key 签名。
-- 产物路径：dsh-android/app/build/outputs/apk/release/app-release.apk
+- M1 快照 CI 全绿：v0.1.0-m16 release 资产（snapshot.tar.xz 265MB + manifest.json，sha256 已校验）。
+- 真机 iQOO15（V2505A，4KB 页）已装并跑通：
+  - 快照复制/解压 OK（openFd + noCompress）；node 可执行（targetSdk 28）；
+  - OpenSSL 配置重定向后 dsh web 启动成功：http://127.0.0.1:3080 返回 200；
+  - WebView 已渲染官方 DSH 界面，mobile.css/js 已注入；单引擎运行（全局锁）。
+- 产物：dsh-android/app/build/outputs/apk/release/app-release.apk（267MB，debug 签名）
 
-## 下一步：真机安装冒烟（需要你在 iQOO 15 上操作）
+## 下一步：功能验证（需要你在 iQOO 15 上操作）
 
-1. 把 app-release.apk 传到手机（USB/网盘），允许“安装未知来源应用”后安装。
-2. 首次启动会解压快照（265MB -> 数 GB），耐心等；之后自动起 dsh web（127.0.0.1:3080）进官方界面。
-3. 重点验证：16KB 页、权限引导、引擎启动、对话、bash 工具、梁神模式预设、软键盘/字号/WebSocket。
-4. 记录任何报错（engine.log / 崩溃），回传给我；顺带看 APK 体积是否可接受（265MB 偏大，可后续精简）。
+1. 在手机上看界面：是否正常聊天布局、字号/软键盘是否可读。
+2. 设置 -> 添加 API Key（DeepSeek），然后发一条消息验证对话 + 工具调用。
+3. 验证梁神模式预设是否出现在预设选择器；bash/文件工具是否可用。
+4. 记录问题回传（截图/engine.log）；顺带确认 265MB APK 体积是否可接受（后续可精简）。
 
 ## 备注
 
