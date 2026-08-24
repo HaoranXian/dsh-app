@@ -25,6 +25,7 @@ object SnapshotExtractor {
      * 确保运行时已解压并校验。
      * 流程：assets -> filesDir（sha256/大小校验）-> 解压到 staging -> 原子切换 runtime。
      */
+    @Synchronized
     fun ensureExtracted(context: Context, onProgress: (String) -> Unit = {}): Boolean {
         val filesDir = context.filesDir
         val runtimeDir = File(filesDir, RUNTIME_DIR)
@@ -36,12 +37,7 @@ object SnapshotExtractor {
         val snapshotFile = File(filesDir, SNAPSHOT_ASSET)
         if (!snapshotFile.exists() || snapshotFile.length() == 0L) {
             onProgress("正在复制快照…")
-            try {
-                context.assets.open(SNAPSHOT_ASSET).use { input ->
-                    snapshotFile.outputStream().use { output -> input.copyTo(output) }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "assets snapshot missing: " + e.message)
+            if (!copyAssetToFile(context, SNAPSHOT_ASSET, snapshotFile)) {
                 return false
             }
         }
@@ -90,6 +86,38 @@ object SnapshotExtractor {
 
     fun isExtracted(runtimeDir: File): Boolean =
         runtimeDir.exists() && File(runtimeDir, "bin/node").exists() && File(runtimeDir, OK_MARKER).exists()
+
+    /**
+     * 可靠地把 asset 复制到文件。
+     * 优先 openFd().createInputStream()（对 noCompress 的 Stored 资产最稳，避免
+     * AssetManager 流在部分真机上截断大文件）；失败则回退 assets.open() 流式复制。
+     */
+    private fun copyAssetToFile(context: Context, assetName: String, dest: File): Boolean {
+        dest.parentFile?.mkdirs()
+        try {
+            val afd = context.assets.openFd(assetName)
+            try {
+                afd.createInputStream().use { input ->
+                    dest.outputStream().use { output -> input.copyTo(output) }
+                }
+            } finally {
+                afd.close()
+            }
+            Log.i(TAG, "copied " + assetName + " -> " + dest.length())
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "openFd copy failed, falling back to open(): " + e.message)
+            return try {
+                context.assets.open(assetName).use { input ->
+                    dest.outputStream().use { output -> input.copyTo(output) }
+                }
+                true
+            } catch (e2: Exception) {
+                Log.e(TAG, "fallback copy failed: " + e2.message)
+                false
+            }
+        }
+    }
 
     private fun readManifest(context: Context): Map<String, Any>? {
         return try {

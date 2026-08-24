@@ -34,6 +34,13 @@ class EngineManager(private val context: Context) {
 
         val node = File(runtimeDir, "bin/node")
         val binJs = File(runtimeDir, "lib/node_modules/@deepseek-ai/dsh/lib/bin.js")
+        Log.d("EngineManager", "node exists=" + node.exists() + " isFile=" + node.isFile + " canExec=" + node.canExecute())
+        if (node.exists() && !node.canExecute()) {
+            Log.d("EngineManager", "trying chmod +x node")
+            node.setExecutable(true, true)
+            node.setExecutable(true, false)
+            Log.d("EngineManager", "after chmod canExec=" + node.canExecute())
+        }
         if (!node.exists() || !binJs.exists()) {
             return false to "运行时缺少 node 或 dsh lib/bin.js（快照不完整？）"
         }
