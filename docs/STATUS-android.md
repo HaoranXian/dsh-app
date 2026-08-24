@@ -19,10 +19,10 @@ koffi 包级加载报错：Error: Mismatched native Koffi modules（koffi/src/ko
 而按用户要求装 npm latest @deepseek-ai/dsh（0.1.1-rc.2），其依赖的 koffi JS 包版本不同，
 校验 native 模块元数据时 mismatch。
 
-## 明天二选一（建议先 A 快速打通，再回 B）
+## 决策（用户已确认：坚持 latest）
 
-- A（最快）：快照改用 DSH_VERSION=0.1.0-rc.6（社区预编译完全匹配），先出可用快照/APK 上真机；后续再升级。
-- B（坚持 latest）：在 Termux Docker 内用源码重编 koffi 和 node-pty（容器里已有 clang/cmake/ndk-sysroot），或等 Vengisk 更新预编译。成本高、周期长。
+- 选定 B：在 Termux Docker 内用源码重编 koffi 和 node-pty（容器已有 clang/cmake/ndk-sysroot），适配 dsh 0.1.1-rc.2 依赖的 koffi 版本；
+  或等 Vengisk 更新预编译。不降级到 0.1.0-rc.6。
 
 ## 下一轮操作
 
