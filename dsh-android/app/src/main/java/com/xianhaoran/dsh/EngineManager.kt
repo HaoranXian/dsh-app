@@ -16,6 +16,7 @@ class EngineManager(private val context: Context) {
     private val dshHome: File get() = File(runtimeDir, "dsh-home")
     private val logFile: File get() = File(context.filesDir, "engine.log")
     private val tmpDir: File get() = File(context.filesDir, "tmp")
+    private val workspaceDir: File get() = File(context.filesDir, "workspace")
 
     fun startEngineAsync(onProgress: (String) -> Unit = {}, onResult: (Boolean, String) -> Unit) {
         Thread {
@@ -33,6 +34,11 @@ class EngineManager(private val context: Context) {
         if (!SnapshotExtractor.ensureExtracted(context, onProgress)) {
             return false to "快照解压/校验失败（请确认 assets/snapshot.tar.xz 已随包）"
         }
+        // 准备默认工作区：app 私有目录（v1 先用私有；外部目录需等 M3 的存储权限流程）
+        workspaceDir.mkdirs()
+        // HOME 指向 runtime/home，dsh 目录浏览默认列 HOME，必须先创建
+        File(runtimeDir, "home").mkdirs()
+        patchAndroidDirectoryPicker()
         onProgress("启动 dsh 引擎…")
 
         val node = File(runtimeDir, "bin/node")
@@ -63,6 +69,7 @@ class EngineManager(private val context: Context) {
             // OpenSSL 默认去读编译期绝对路径，迁移后必须重定向
             "OPENSSL_CONF" to runtimeDir.absolutePath + "/etc/tls/openssl.cnf",
             "SSL_CERT_FILE" to runtimeDir.absolutePath + "/etc/tls/cert.pem",
+            "DSH_DEFAULT_WORKSPACE" to workspaceDir.absolutePath,
         )
 
         return try {
@@ -96,6 +103,35 @@ class EngineManager(private val context: Context) {
         } catch (e: Exception) {
             Log.e("EngineManager", "start failed", e)
             false to "引擎启动失败: " + e.message
+        }
+    }
+
+    /** 运行时把 host 目录选择器在 android 上改为返回默认工作区（原逻辑走 zenity，设备上无 GUI）。 */
+    private fun patchAndroidDirectoryPicker() {
+        val picker = File(
+            runtimeDir,
+            "lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-host-directory-picker-native/lib/index.js"
+        )
+        if (!picker.exists()) {
+            Log.w("EngineManager", "directory-picker lib not found: " + picker.absolutePath)
+            return
+        }
+        try {
+            val text = picker.readText()
+            if (text.contains("DSH_DEFAULT_WORKSPACE")) return
+            val old = "if (platform === \"linux\" || platform === \"android\") {"
+            if (!text.contains(old)) {
+                Log.w("EngineManager", "directory-picker pattern not found; skip patch")
+                return
+            }
+            val patched = text.replace(
+                old,
+                "if (platform === \"android\") { return outputPath(process.env.DSH_DEFAULT_WORKSPACE || \"/\"); } if (platform === \"linux\") {"
+            )
+            picker.writeText(patched)
+            Log.d("EngineManager", "patched directory picker: android -> DSH_DEFAULT_WORKSPACE")
+        } catch (e: Exception) {
+            Log.e("EngineManager", "patch picker failed: " + e.message)
         }
     }
 
