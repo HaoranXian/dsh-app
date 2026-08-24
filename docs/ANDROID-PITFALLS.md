@@ -29,6 +29,12 @@
 | 10 | 发布 Release 权限不足 | Resource not accessible by integration (generate-release-notes) | permissions 只有 read | 设 contents: write | 建 workflow 时就查 permissions 模型 |
 | 11 | Node20 action 弃用警告 | annotation warning | actions/checkout@v4 等 | 升级 action 大版本 | 建 workflow 时用最新大版本 |
 
+## 设备端/迁移类
+
+| # | 坑 | 现象 | 原因 | 修复 | 预判 |
+|---|----|------|------|------|------|
+| 12 | pnpm 软链指向构建期 Termux 绝对路径 | 设备上插件加载失败 | dsh plugin add 用 pnpm，node_modules 软链是 /data/data/com.termux/files/usr/... | 把 presets 目录直接复制进 .agent-presets（自包含） | 快照打包时就要考虑“可迁移性”，不要依赖绝对路径 |
+
 ## 规避原则（以后怎么做）
 
 1. 复用上游已验证脚本（Vengisk install.sh / kelai 引擎代码），不要自造第二套。

@@ -34,6 +34,15 @@ echo "== 4/6 装配梁神模式 =="
 export DSH_HOME="$PREFIX/dsh-home"
 mkdir -p "$DSH_HOME/profiles/web"
 node --expose-internals "$DSH_BIN" plugin --profile web add @linxin666/dsh-liangshen || true
+# 兜底：把梁神 presets 目录整体复制进 .agent-presets（自包含，避免 pnpm 绝对软链在设备上失效）
+LS_PRESET="$DSH_HOME/profiles/web/node_modules/@linxin666/dsh-liangshen/presets/liangshen"
+if [ -d "$LS_PRESET" ]; then
+  mkdir -p "$DSH_HOME/.agent-presets/liangshen"
+  cp -r "$LS_PRESET/." "$DSH_HOME/.agent-presets/liangshen/"
+  echo "  [OK] copied liangshen presets -> $DSH_HOME/.agent-presets/liangshen"
+else
+  echo "  [WARN] liangshen presets not found at $LS_PRESET"
+fi
 
 echo "== 5/6 注入移动适配（mobile.css / mobile.js）=="
 INDEX_HTML="$(find "$(npm root -g)/@deepseek-ai" -type f -path '*dist*' -name index.html 2>/dev/null | head -1)"

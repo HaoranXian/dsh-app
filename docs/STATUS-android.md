@@ -5,11 +5,13 @@
 - M0 工程骨架：dsh-android（Kotlin）本地 assembleDebug 通过，APK 936KB（无快照）。
 - GitHub 仓库 HaoranXian/dsh-app 已推送，SSH key 已配置。
 - M2 核心代码已写：SnapshotExtractor（解压/校验/原子切换）、EngineManager（启动 node + 探活）、EngineService（看门狗自动重启）。本地编译通过。
-- M1 CI 链路已跑通大部分：
+- M1 快照 CI 全绿：
   - GitHub Actions arm64 + termux/termux-docker:aarch64 正常；
-  - Vengisk dsh-termux 轻量包安装成功（手动执行 install.js，绕过 npm allowScripts 门禁）；
-  - 9 个 Android 补丁全部应用；
-  - libandroid-spawn 已补装，pty/koffi 直接 require .node 成功。
+  - 采用 Vengisk 官方 install.sh（源码编译 node-pty/koffi，适配 dsh 0.1.1-rc.2）；
+  - 9 个 Android 补丁全部应用；libandroid-spawn/coreutils 已补装；
+  - release 资产已发布：v0.1.0-m15 的 snapshot.tar.xz（265MB）+ manifest.json；
+  - 本地已用快照打出 267MB release APK 并签名（debug key）。
+- 梁神模式：profile 已装配，另把 presets 目录复制进 .agent-presets（自包含，防软链迁移失效）——随 m16 重打。
 
 ## 当前唯一阻塞（M1 最后一公里）
 
