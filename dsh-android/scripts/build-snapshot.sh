@@ -8,6 +8,7 @@ OUT="${ROOT}/build"
 WORK="${OUT}/snapshot-work"
 rm -rf "$WORK" "$OUT/snapshot.tar.xz" "$OUT/manifest.json"
 mkdir -p "$WORK" "$OUT"
+chmod 777 "$WORK"
 
 echo "== 在 Termux Docker (aarch64) 中构建快照 =="
 set +e
