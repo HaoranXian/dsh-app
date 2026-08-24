@@ -13,7 +13,7 @@ class EngineManager(private val context: Context) {
     @Volatile private var stopping = false
 
     private val runtimeDir: File get() = File(context.filesDir, SnapshotExtractor.RUNTIME_DIR)
-    private val dshHome: File get() = File(context.filesDir, "dshhome")
+    private val dshHome: File get() = File(runtimeDir, "dsh-home")
     private val logFile: File get() = File(context.filesDir, "engine.log")
     private val tmpDir: File get() = File(context.filesDir, "tmp")
 

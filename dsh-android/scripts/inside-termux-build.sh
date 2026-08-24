@@ -30,7 +30,8 @@ node --expose-internals "$DSH_BIN" --version
 node -e "require('$(npm root -g)/@deepseek-ai/dsh/node_modules/node-pty'); require('$(npm root -g)/@deepseek-ai/dsh/node_modules/koffi'); console.log('natives ok')"
 
 echo "== 4/6 装配梁神模式 =="
-export DSH_HOME=/data/dshhome
+# DSH_HOME 放 $PREFIX/dsh-home：既能写入，又能随快照打包、到设备后可迁移
+export DSH_HOME="$PREFIX/dsh-home"
 mkdir -p "$DSH_HOME/profiles/web"
 node --expose-internals "$DSH_BIN" plugin --profile web add @linxin666/dsh-liangshen || true
 
