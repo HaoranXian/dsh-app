@@ -34,8 +34,7 @@ echo "== 4/6 装配梁神模式 =="
 export DSH_HOME="$PREFIX/dsh-home"
 mkdir -p "$DSH_HOME/profiles/web"
 node --expose-internals "$DSH_BIN" plugin --profile web add @linxin666/dsh-liangshen || true
-# 移动端布局插件（抽屉侧栏/输入区/安全区），社区实测与官方前端匹配
-node --expose-internals "$DSH_BIN" plugin --profile web add github:mexiaosqwq/dsh-web-mobile || true
+# 移动布局：自研 mobile.css/mobile.js（见 mobile-patch/），不再装 dsh-web-mobile（与 rc.2 不兼容卡服务）
 # 兜底：把梁神 presets 目录整体复制进 .agent-presets（自包含，避免 pnpm 绝对软链在设备上失效）
 LS_PRESET="$DSH_HOME/profiles/web/node_modules/@linxin666/dsh-liangshen/presets/liangshen"
 if [ -d "$LS_PRESET" ]; then
