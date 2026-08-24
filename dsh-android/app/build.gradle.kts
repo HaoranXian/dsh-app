@@ -23,6 +23,11 @@ android {
         }
     }
 
+    androidResources {
+        // 大 asset 保持原样，避免 AssetManager 压缩流在真机上被截断
+        noCompress += listOf("snapshot.tar.xz", "manifest.json")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

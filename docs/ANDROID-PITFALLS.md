@@ -34,6 +34,7 @@
 | # | 坑 | 现象 | 原因 | 修复 | 预判 |
 |---|----|------|------|------|------|
 | 12 | pnpm 软链指向构建期 Termux 绝对路径 | 设备上插件加载失败 | dsh plugin add 用 pnpm，node_modules 软链是 /data/data/com.termux/files/usr/... | 把 presets 目录直接复制进 .agent-presets（自包含） | 快照打包时就要考虑“可迁移性”，不要依赖绝对路径 |
+| 13 | 大 asset 经 AssetManager 压缩流被截断 | 真机复制快照只有 58MB/265MB，size mismatch | 默认 deflate 存储 + 大文件流在真机不稳定 | androidResources.noCompress 标记 snapshot/manifest | 打包大 asset 一律 noCompress，并在 APK 内校验 |
 
 ## 规避原则（以后怎么做）
 
